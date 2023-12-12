@@ -1,0 +1,157 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#define MAX_STUDENTS 100
+
+typedef struct 
+{
+    char name[51];
+    char id[10];
+    float GPA;
+} Student;
+
+void add(Student* sv);
+void file(Student sv);
+void studentManagement(Student* sv);
+void deleteStudentFromFile(const char* id);
+
+void add(Student* sv) {
+    printf("\Nhap ID sinh vien: ");
+    scanf(" %9s", sv->id);
+    printf("Nhap ten sinh vien: ");
+    scanf(" %50[^\n]", sv->name);
+    printf("Nhap GPA: ");
+    scanf("%f", &(sv->GPA));
+}
+
+void file(Student sv) {
+    FILE* file;
+    file = fopen("data.txt", "a");
+    if (file == NULL) {
+        printf("Khong the mo tep.\n");
+        exit(1);
+    }
+    fprintf(file, "%s %s %.2f\n", sv.name, sv.id, sv.GPA);
+    fclose(file);
+}
+
+void deleteStudentFromFile(const char* id) {
+    FILE* file;
+    FILE* tempFile;
+    char line[100];
+    int found = 0;
+
+    file = fopen("data.txt", "r");
+    tempFile = fopen("temp.txt", "w");
+
+    if (file == NULL || tempFile == NULL) {
+        printf("Cannot open file.\n");
+        exit(1);
+    }
+
+    while (fgets(line, sizeof(line), file) != NULL) {
+        char studentId[10];
+        sscanf(line, "%*s %s", studentId);
+
+        if (strcmp(studentId, id) == 0) {
+            found = 1;
+            continue;
+        }
+
+        fputs(line, tempFile);
+    }
+
+    fclose(file);
+    fclose(tempFile);
+
+    if (found) {
+        remove("data.txt");
+        rename("temp.txt", "data.txt");
+        printf("ID sinh vien %s da bi xoa khoi tep.\n", id);
+    } else {
+        remove("temp.txt");
+        printf("ID sinh vien %s khong co trong tep.\n", id);
+    }
+}
+
+void studentManagement(Student* sv) {
+    int choice, numStudents = 0;
+
+    do {
+        printf("\nQuan li sinh vien:\n");
+        printf("1. Them sinh vien\n");
+        printf("2. Hien thi thong tin sinh vien\n");
+        printf("3. Cap nhat thong tin sinh vien\n");
+        printf("4. Xoa hoc sinh khoi tep\n");
+        printf("5. Write data to file\n");
+        printf("0. Exit\n");
+
+        if (numStudents > 0) {
+            printf("Note: Neu ban muon cap nhat thong tin sinh vien, vui long tham khao muc luc cua sinh vien trong tuy chon 2.\n");
+        }
+
+        printf("\nNhap lua chon cua ban: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1:
+                add(&sv[numStudents]);
+                file(sv[numStudents]);
+                numStudents++;
+                break;
+            case 2:
+                printf("\nThong tin sinh vien:\n");
+                for (int i = 0; i < numStudents; i++) {
+                    printf("Index: %d\n", i);
+                    printf("Name: %s\n", sv[i].name);
+                    printf("ID: %s\n", sv[i].id);
+                    printf("GPA: %.2f\n", sv[i].GPA);
+                    printf("----------------------------\n");
+                }
+                break;
+            case 3:
+                if (numStudents > 0) {
+                    int index;
+                    printf("\nNhap muc sinh vien can cap nhat: ");
+                    scanf("%d", &index);
+                    if (index >= 0 && index < numStudents) {
+                        add(&sv[index]);
+                        file(sv[index]);
+                    } else {
+                        printf("Muc khong hop le.\n");
+                    }
+                } else {
+                    printf("Chua co sinh vien nao duoc them vao.\n");
+                }
+                break;
+            case 4:
+                if (numStudents > 0) {
+                    char id[10];
+                    printf("\nNhap ID sinh vien de xoa: ");
+                    scanf(" %9s", id);
+                    deleteStudentFromFile(id);
+                } else {
+                    printf("Chua co sinh vien nao duoc them vao.\n");
+                }
+                break;
+            case 5:
+                printf("\nNhap du lieu duoc ghi vao tap tin.\n");
+                for (int i = 0; i < numStudents; i++) {
+                    file(sv[i]);
+                }
+                break;
+            case 0:
+                printf("Dang thoat.\n");
+                break;
+            default:
+                printf("Lua chin khong hop le.\n");
+                break;
+        }
+    } while (choice != 0);
+}
+
+int main() {
+    Student sv[MAX_STUDENTS];
+    studentManagement(sv);
+    return 0;
+}
